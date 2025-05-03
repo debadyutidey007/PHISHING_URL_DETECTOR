@@ -1,0 +1,588 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Advanced Settings Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h2 class="card-title mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>Phishing Detection
+                </h2>
+                <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#settingsCollapse">
+                    <i class="fas fa-cog me-1"></i>Settings
+                </button>
+            </div>
+
+            <!-- Settings Panel -->
+            <div class="collapse" id="settingsCollapse">
+                <div class="card-body bg-dark text-white border-top border-secondary">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-sliders-h me-2"></i>Detection Settings</h5>
+                            <div class="mb-3">
+                                <label for="sensitivity-slider" class="form-label">Detection Sensitivity</label>
+                                <input type="range" class="form-range" min="0" max="100" value="75"
+                                    id="sensitivity-slider">
+                                <div class="d-flex justify-content-between">
+                                    <small>Low</small>
+                                    <small>Medium</small>
+                                    <small>High</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="enable-advanced-features"
+                                        checked>
+                                    <label class="form-check-label" for="enable-advanced-features">Enable Advanced
+                                        Features</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-chart-pie me-2"></i>Visualization Options</h5>
+                            <div class="mb-3">
+                                <label class="form-label d-block">Chart Type</label>
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="chart-type" id="chart-bar"
+                                        autocomplete="off" checked>
+                                    <label class="btn btn-outline-primary btn-sm" for="chart-bar">Bar</label>
+
+                                    <input type="radio" class="btn-check" name="chart-type" id="chart-radar"
+                                        autocomplete="off">
+                                    <label class="btn btn-outline-primary btn-sm" for="chart-radar">Radar</label>
+
+                                    <input type="radio" class="btn-check" name="chart-type" id="chart-pie"
+                                        autocomplete="off">
+                                    <label class="btn btn-outline-primary btn-sm" for="chart-pie">Pie</label>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="feature-count" class="form-label">Feature Count</label>
+                                <select class="form-select form-select-sm" id="feature-count">
+                                    <option value="5" selected>Top 5</option>
+                                    <option value="10">Top 10</option>
+                                    <option value="15">Top 15</option>
+                                    <option value="all">All Features</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Analysis Card Body -->
+            <div class="card-body">
+                <form id="url-form" class="url-form">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text bg-dark text-white"><i class="fas fa-link"></i></span>
+                        <input type="url" id="url-input" class="form-control"
+                            placeholder="Enter a URL to analyze (e.g., https://example.com)" required>
+                        <button type="submit" id="analyze-btn" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i> Analyze
+                        </button>
+                        <button type="button" id="scan-mode-btn" class="btn btn-outline-secondary">
+                            <i class="fas fa-bolt me-1"></i> Batch Mode
+                        </button>
+                    </div>
+
+                    <!-- Batch Analysis - Initially Hidden -->
+                    <div id="batch-analysis-section" class="d-none mb-3">
+                        <div class="card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="card-title mb-0">Batch Analysis</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="batch-urls" class="form-label">Enter multiple URLs (one per
+                                        line)</label>
+                                    <textarea id="batch-urls" class="form-control" rows="5"
+                                        placeholder="https://example1.com&#10;https://example2.com&#10;https://example3.com"></textarea>
+                                </div>
+                                <button type="button" id="batch-analyze-btn" class="btn btn-primary">
+                                    <i class="fas fa-play me-1"></i> Start Batch Analysis
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Browser Extension Promo -->
+                <div class="alert alert-info d-flex align-items-center mt-3" role="alert">
+                    <i class="fas fa-puzzle-piece fs-4 me-2"></i>
+                    <div>
+                        <strong>Pro Tip:</strong> Get real-time protection with our browser extension.
+                        <a href="#" class="alert-link">Download now</a> for instant phishing detection while browsing.
+                    </div>
+                </div>
+
+                <!-- Loading Spinner -->
+                <div id="loading-spinner" class="d-none loading-indicator">
+                    <div class="progress" style="height: 5px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                            style="width: 100%"></div>
+                    </div>
+                    <div class="d-flex justify-content-center mt-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2">Analyzing URL with advanced machine learning...</span>
+                    </div>
+                </div>
+
+                <!-- Error Alert -->
+                <div id="error-alert" class="alert alert-danger d-none" role="alert"></div>
+
+                <!-- Results Section -->
+                <div id="result-section" class="d-none result-container">
+                    <h3 class="mb-3">Analysis Results</h3>
+                    <div id="result-content">
+                        <!-- URL Info Card -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h4 class="mb-3" id="analyzed-url-heading">https://example.com</h4>
+                                        <div class="d-flex align-items-center mb-4">
+                                            <div id="result-icon" class="me-3 fs-1 text-success">
+                                                <i class="fas fa-shield-check"></i>
+                                            </div>
+                                            <div>
+                                                <span id="result-badge" class="badge bg-success fs-5 mb-2">Safe
+                                                    URL</span>
+                                                <div id="confidence" class="text-muted">Confidence: 95.5%</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Risk Score Gauge -->
+                                        <div class="mb-4">
+                                            <h5>Risk Assessment</h5>
+                                            <div class="risk-gauge-container">
+                                                <canvas id="risk-gauge"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="domain-info-card p-3 border rounded mb-3">
+                                            <h5><i class="fas fa-globe me-2"></i>Domain Information</h5>
+                                            <div id="domain-info">
+                                                <div class="domain-info-item d-flex justify-content-between">
+                                                    <span>Domain:</span>
+                                                    <span id="domain-name" class="fw-bold">example.com</span>
+                                                </div>
+                                                <div class="domain-info-item d-flex justify-content-between">
+                                                    <span>Registration Date:</span>
+                                                    <span id="registration-date">--</span>
+                                                </div>
+                                                <div class="domain-info-item d-flex justify-content-between">
+                                                    <span>SSL Certificate:</span>
+                                                    <span id="ssl-status"><i
+                                                            class="fas fa-check-circle text-success"></i> Valid</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Security Assessment -->
+                                        <h5 class="mb-2">Threat Assessment</h5>
+                                        <div id="threat-assessment" class="mb-3">
+                                            <div class="progress mb-3" style="height: 10px;">
+                                                <div class="progress-bar bg-success" role="progressbar"
+                                                    style="width: 15%" id="url-structure-risk"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <small>URL Structure</small>
+                                                <small id="url-structure-percent">15%</small>
+                                            </div>
+
+                                            <div class="progress mb-3" style="height: 10px;">
+                                                <div class="progress-bar bg-success" role="progressbar"
+                                                    style="width: 10%" id="domain-risk"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <small>Domain Risk</small>
+                                                <small id="domain-risk-percent">10%</small>
+                                            </div>
+
+                                            <div class="progress mb-3" style="height: 10px;">
+                                                <div class="progress-bar bg-success" role="progressbar"
+                                                    style="width: 5%" id="content-risk"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <small>Content Risk</small>
+                                                <small id="content-risk-percent">5%</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Feature Analysis Card -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-dark text-white">
+                                <h4 class="card-title mb-0"><i class="fas fa-chart-line me-2"></i>Feature Analysis</h4>
+                            </div>
+                            <div class="card-body">
+                                <ul class="nav nav-tabs mb-3" id="featureTab" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="table-tab" data-bs-toggle="tab"
+                                            data-bs-target="#table-panel" type="button" role="tab"
+                                            aria-controls="table-panel" aria-selected="true">
+                                            <i class="fas fa-table me-1"></i> Table
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="chart-tab" data-bs-toggle="tab"
+                                            data-bs-target="#chart-panel" type="button" role="tab"
+                                            aria-controls="chart-panel" aria-selected="false">
+                                            <i class="fas fa-chart-bar me-1"></i> Chart
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="advanced-tab" data-bs-toggle="tab"
+                                            data-bs-target="#advanced-panel" type="button" role="tab"
+                                            aria-controls="advanced-panel" aria-selected="false">
+                                            <i class="fas fa-microscope me-1"></i> Advanced
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content" id="featureTabContent">
+                                    <!-- Table Panel -->
+                                    <div class="tab-pane fade show active" id="table-panel" role="tabpanel"
+                                        aria-labelledby="table-tab">
+                                        <div class="table-responsive">
+                                            <table id="feature-table" class="table table-striped feature-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Feature</th>
+                                                        <th>Value</th>
+                                                        <th>Importance</th>
+                                                        <th>Impact</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Feature data will be populated here -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- Chart Panel -->
+                                    <div class="tab-pane fade" id="chart-panel" role="tabpanel"
+                                        aria-labelledby="chart-tab">
+                                        <div class="feature-chart-container">
+                                            <canvas id="feature-chart"></canvas>
+                                        </div>
+                                    </div>
+
+                                    <!-- Advanced Panel -->
+                                    <div class="tab-pane fade" id="advanced-panel" role="tabpanel"
+                                        aria-labelledby="advanced-tab">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="card border-light mb-3">
+                                                    <div class="card-header">URL Structure Analysis</div>
+                                                    <div class="card-body" id="structure-analysis">
+                                                        <!-- Will be populated with advanced URL structure details -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="card border-light mb-3">
+                                                    <div class="card-header">Security Insights</div>
+                                                    <div class="card-body" id="security-insights">
+                                                        <!-- Will be populated with security insights -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="card border-light">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0">Raw Feature Data</h6>
+                                                <div>
+                                                    <button class="btn btn-sm btn-outline-primary me-1"
+                                                        id="copy-json-btn">
+                                                        <i class="fas fa-copy"></i> Copy
+                                                    </button>
+                                                    <select class="form-select form-select-sm d-inline-block"
+                                                        style="width: auto;" id="json-format-select">
+                                                        <option value="pretty">Pretty</option>
+                                                        <option value="condensed">Condensed</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="feature-data-container">
+                                                    <pre id="raw-feature-data"
+                                                        class="feature-data-code p-3 rounded"><!-- JSON data will appear here --></pre>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History & Comparison Section -->
+        <div id="batch-results-section" class="d-none mb-4">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>Batch Analysis Results
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="batch-results-table">
+                            <thead>
+                                <tr>
+                                    <th>URL</th>
+                                    <th>Status</th>
+                                    <th>Confidence</th>
+                                    <th>Risk Score</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Batch results will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Dashboard -->
+        <div class="card mb-4">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-chart-network me-2"></i>Analytics Dashboard
+                </h3>
+                <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#analyticsCollapse">
+                    <i class="fas fa-chevron-down me-1"></i>Show
+                </button>
+            </div>
+            <div class="collapse" id="analyticsCollapse">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border-light">
+                                <div class="card-header">Recent Analysis History</div>
+                                <div class="card-body">
+                                    <div class="history-chart-container">
+                                        <canvas id="history-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border-light">
+                                <div class="card-header">Threat Distribution</div>
+                                <div class="card-body">
+                                    <div class="threat-chart-container">
+                                        <canvas id="threat-distribution-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card border-light">
+                                <div class="card-header">Analysis Insights</div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 col-sm-6 mb-3">
+                                            <div class="insight-card insight-urls">
+                                                <div class="insight-icon">
+                                                    <i class="fas fa-link"></i>
+                                                </div>
+                                                <div class="insight-content">
+                                                    <h2 id="total-analyzed" class="insight-value">0</h2>
+                                                    <p class="insight-label">URLs Analyzed</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 col-sm-6 mb-3">
+                                            <div class="insight-card insight-threats">
+                                                <div class="insight-icon">
+                                                    <i class="fas fa-shield-virus"></i>
+                                                </div>
+                                                <div class="insight-content">
+                                                    <h2 id="phishing-detected" class="insight-value">0</h2>
+                                                    <p class="insight-label">Phishing Detected</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 col-sm-6 mb-3">
+                                            <div class="insight-card insight-confidence">
+                                                <div class="insight-icon">
+                                                    <i class="fas fa-chart-pie"></i>
+                                                </div>
+                                                <div class="insight-content">
+                                                    <h2 id="avg-confidence" class="insight-value">0%</h2>
+                                                    <p class="insight-label">Avg. Confidence</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 col-sm-6 mb-3">
+                                            <div class="insight-card insight-rate">
+                                                <div class="insight-icon">
+                                                    <i class="fas fa-tachometer-alt"></i>
+                                                </div>
+                                                <div class="insight-content">
+                                                    <h2 id="detection-rate" class="insight-value">0%</h2>
+                                                    <p class="insight-label">Detection Rate</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- About Section -->
+        <div class="card about-section">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>About
+                </h3>
+                <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#aboutCollapse">
+                    <i class="fas fa-chevron-down me-1"></i>Show
+                </button>
+            </div>
+            <div class="collapse" id="aboutCollapse">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4 class="key-features-title">Advanced Phishing Detection</h4>
+                            <p class="features-description">This advanced phishing URL detection system employs
+                                state-of-the-art machine learning algorithms trained on the PhiUSIIL Phishing URL
+                                Dataset with 235,795 URLs. The system utilizes a Random Forest classifier to analyze
+                                various URL features and identify potential phishing attempts with high accuracy.</p>
+
+                            <h5 class="features-subtitle mt-4">Key Features:</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="features-list">
+                                        <div class="feature-item">
+                                            <div class="feature-icon blue-icon">
+                                                <i class="fas fa-bolt"></i>
+                                            </div>
+                                            <div class="feature-text">Real-time analysis</div>
+                                        </div>
+                                        <div class="feature-item">
+                                            <div class="feature-icon purple-icon">
+                                                <i class="fas fa-chart-line"></i>
+                                            </div>
+                                            <div class="feature-text">Feature visualization</div>
+                                        </div>
+                                        <div class="feature-item">
+                                            <div class="feature-icon green-icon">
+                                                <i class="fas fa-percentage"></i>
+                                            </div>
+                                            <div class="feature-text">Confidence scoring</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="features-list">
+                                        <div class="feature-item">
+                                            <div class="feature-icon orange-icon">
+                                                <i class="fas fa-brain"></i>
+                                            </div>
+                                            <div class="feature-text">Machine learning</div>
+                                        </div>
+                                        <div class="feature-item">
+                                            <div class="feature-icon teal-icon">
+                                                <i class="fas fa-layer-group"></i>
+                                            </div>
+                                            <div class="feature-text">Batch processing</div>
+                                        </div>
+                                        <div class="feature-item">
+                                            <div class="feature-icon red-icon">
+                                                <i class="fas fa-shield-alt"></i>
+                                            </div>
+                                            <div class="feature-text">Threat assessment</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h4 class="tech-implementation-title">Technical Implementation</h4>
+                            <p class="tech-description">The system extracts and analyzes the following features from
+                                URLs:</p>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="tech-feature-card url-structure">
+                                        <div class="tech-icon">
+                                            <i class="fas fa-link"></i>
+                                        </div>
+                                        <div class="tech-content">
+                                            <h5 class="tech-title">URL Structure</h5>
+                                            <ul class="tech-list">
+                                                <li><span class="feature-dot"></span>Length and depth analysis</li>
+                                                <li><span class="feature-dot"></span>Special character detection</li>
+                                                <li><span class="feature-dot"></span>Path complexity evaluation</li>
+                                                <li><span class="feature-dot"></span>Parameter examination</li>
+                                                <li><span class="feature-dot"></span>Encoding pattern recognition</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="tech-feature-card domain-analysis">
+                                        <div class="tech-icon">
+                                            <i class="fas fa-globe"></i>
+                                        </div>
+                                        <div class="tech-content">
+                                            <h5 class="tech-title">Domain Analysis</h5>
+                                            <ul class="tech-list">
+                                                <li><span class="feature-dot"></span>TLD reputation assessment</li>
+                                                <li><span class="feature-dot"></span>Suspicious domain patterns</li>
+                                                <li><span class="feature-dot"></span>Registration data analysis</li>
+                                                <li><span class="feature-dot"></span>Domain age evaluation</li>
+                                                <li><span class="feature-dot"></span>Subdomain complexity check</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tech-accuracy-card">
+                                <div class="accuracy-icon">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                                <div class="accuracy-content">
+                                    <span class="accuracy-text">Powered by advanced machine learning with </span>
+                                    <span class="accuracy-value">99.45%</span>
+                                    <span class="accuracy-text"> accuracy on test datasets</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
