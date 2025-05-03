@@ -3,5 +3,4 @@ __pycache__/
 feature_importances.joblib
 feature_names.joblib
 phishing_model.joblib
-processed_data.csv
 venv/
